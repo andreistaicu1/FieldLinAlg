@@ -9,19 +9,19 @@
 typedef struct finite_field {
     size_t p_char;
     size_t degree;
-    size_t *min_polynomial;
+    int *min_polynomial;
 }finite_field_t;
 
 typedef struct ff_element {
     finite_field_t *ff;
-    size_t *polynomial;
+    int *polynomial;
 }ff_element_t;
 
 /*
 * Creates finite field
 */
 finite_field_t *init_finite_field(size_t degree, size_t p_char){
-    finite_field_t *ff = malloc(sizeof(finite_field_t));
+    finite_field_t ff = new ff_element;
     ff->degree = degree;
     ff->p_char = p_char;
     ff->min_polynomial = find_min_polynomial(p_char, degree);
@@ -54,14 +54,10 @@ ff_element_t add(ff_element_t a, ff_element_t b){
     assert(ff_equal(a.ff, b.ff));
 
     finite_field_t *ff = a.ff;
-    size_t new_poly[a.ff->degree];
-    size_t carry;
+    int new_poly[a.ff->degree];
 
-    carry = 0;
     for (size_t i = 0; i < ff->degree; i++){
-        size_t val = a.polynomial[i] + b.polynomial[i] + carry;
-        carry = floor(val / ff->p_char);
-        new_poly[i] = val;
+        new_poly[i] = (a.polynomial[i] + b.polynomial[i]) % ff->p_char;
     }
 
     return (ff_element_t) {.ff = ff, .polynomial = new_poly};
