@@ -187,8 +187,8 @@ public:
                 return std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
             }
 
-            Polynomial compute_rem_a = std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
-            Polynomial compute_rem_b = std::get<0>(compute_p1) - (std::get<0>(compute_p2) * quotient);
+            Polynomial compute_rem_a = std::get<0>(compute_p1) - (std::get<0>(compute_p2) * quotient);
+            Polynomial compute_rem_b = std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
             return euclidean_algorithm(p2, remainder, compute_p2, std::make_pair(compute_rem_a, compute_rem_b));
     }
 };
