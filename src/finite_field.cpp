@@ -114,13 +114,19 @@ public:
         return this->p[this->p.size()-1];
     }
 
+    void print() {
+        for(auto elem : this->p) {
+            std::cout << elem << " ";
+        }
+        std::cout << std::endl;
+    }
+
     static Polynomial zero_polynomial(int length) {
         std::vector<int> output(length, 0);
         return Polynomial(output);
     }
 
     static std::tuple<Polynomial, Polynomial> polynomial_div(Polynomial p1, Polynomial p2) {
-        std::cout << "Startgin!" << std::endl;
         int max_size = std::max(p1.size(), p2.size());
         Polynomial zero_poly = zero_polynomial(max_size);
 
@@ -132,12 +138,12 @@ public:
         Polynomial trim_p2 = p2.trim_end();
 
         int coefficient = trim_p1.lead_coeff()/trim_p2.lead_coeff();
-        int degree = trim_p1.size()-1 - trim_p2.size()-1;
+        int degree = trim_p1.size()-1 - (trim_p2.size()-1);
         std::vector<int> on_top_vec(degree+1, 0);
         on_top_vec[degree] = coefficient;
         Polynomial on_top = Polynomial(on_top_vec);
 
-        Polynomial remainder = trim_p1 - (on_top*trim_p2);
+        Polynomial remainder = (trim_p1 - (on_top*trim_p2)).trim_end();
         
         std::tuple<Polynomial, Polynomial> next_output = polynomial_div(remainder, trim_p2);
         return std::make_pair((on_top + std::get<0>(next_output)).pad_to_length(max_size), std::get<1>(next_output).pad_to_length(max_size));
