@@ -11,6 +11,6 @@
 */
 
 size_t *find_min_polynomial(size_t degree, size_t p_char){
-    size_t *poly = malloc(sizeof(size_t) * 2);
+    int *poly = malloc(sizeof(int) * 2);
     return poly;
 }
