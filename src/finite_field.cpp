@@ -26,6 +26,26 @@ public:
         this->actual_degree = last;
     };
 
+    bool operator==(const Polynomial& other) {
+
+        if (this->actual_degree != other.actual_degree){
+            return false;
+        }
+
+        // Gets the smallest length polynomial
+        int min = this->p.size();
+        if (other.p.size() < min){
+            min = other.p.size();
+        }
+
+        // Checks each element to see if they're equal
+        for (auto i = 0; i < min; i++) {
+            if (this->p[i] != other.p[i]) return false;
+        }
+
+        return true;
+    }
+
     Polynomial operator+(const Polynomial& other) {
         auto max = std::max(this->p.size(), other.p.size());
 
@@ -148,6 +168,29 @@ public:
         std::tuple<Polynomial, Polynomial> next_output = polynomial_div(remainder, trim_p2);
         return std::make_pair((on_top + std::get<0>(next_output)).pad_to_length(max_size), std::get<1>(next_output).pad_to_length(max_size));
     }
+
+    static Polynomial euclidean_algorithm(Polynomial p1, Polynomial p2, std::tuple<Polynomial, Polynomial> compute_p1, 
+        std::tuple<Polynomial, Polynomial> compute_p2){
+
+            auto output = polynomial_div(p1, p2);
+            Polynomial quotient = std::get<0>(output);
+            Polynomial remainder = std::get<1>(output);
+
+            // This function should only be input relatively prime things
+            assert(!(remainder == zero_polynomial(1)));
+
+            std::vector<int> one_vec{1};
+            Polynomial one = Polynomial(one_vec);
+
+            // Checks if the remainder is one
+            if (remainder == one){
+                return std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
+            }
+
+            Polynomial compute_rem_a = std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
+            Polynomial compute_rem_b = std::get<0>(compute_p1) - (std::get<0>(compute_p2) * quotient);
+            return euclidean_algorithm(p2, remainder, compute_p2, std::make_pair(compute_rem_a, compute_rem_b));
+    }
 };
 
 int main() {
@@ -173,7 +216,7 @@ int main() {
     return 0;
 }
 
-/*
+
 class finite_field {
 public:
     int p_char, degree;
@@ -236,4 +279,4 @@ public:
         
     };
 };
-*/
+
