@@ -1,5 +1,6 @@
 #include <vector>
 #include <memory>
+#include <cmath>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,8 @@
 class Polynomial {
 public:
     std::vector<int> p;
-    int actual_degree;
+    int degree;
+    int lead_coeff;
 
     Polynomial(std::vector<int> p) : p(p) {
         int last = 0;
@@ -23,27 +25,27 @@ public:
                 last = i;
             }
         }
-        this->actual_degree = last;
+        this->degree = last;
+        this->lead_coeff = this->p[this->degree];
     };
 
     bool operator==(const Polynomial& other) {
 
-        if (this->actual_degree != other.actual_degree){
+        if (this->degree != other.degree){
             return false;
         }
 
-        // Gets the smallest length polynomial
-        int min = this->p.size();
-        if (other.p.size() < min){
-            min = other.p.size();
-        }
-
-        // Checks each element to see if they're equal
-        for (auto i = 0; i < min; i++) {
+        for (auto i = 0; i < degree+1; i++) {
             if (this->p[i] != other.p[i]) return false;
         }
 
         return true;
+    }
+
+    void operator=(const Polynomial& other) {
+        p = other.p;
+        degree = other.degree;
+        lead_coeff = other.lead_coeff;
     }
 
     Polynomial operator+(const Polynomial& other) {
@@ -90,12 +92,12 @@ public:
 
     Polynomial operator*(const Polynomial& other){
         
-        int new_degree = this->actual_degree + other.actual_degree + 1;
+        int new_degree = this->degree + other.degree + 1;
         std::vector<int> output(new_degree, 0);
 
         for(auto n = 0; n < new_degree; n++){
             for(auto i = 0; i <= n; i++){
-                if (i <= this->actual_degree && n - i <= other.actual_degree){
+                if (i <= this->degree && n - i <= other.degree){
                     output[n] += this->p[i] * other.p[n-i];
                 }
             }
@@ -103,10 +105,20 @@ public:
         
         return Polynomial(output);
     }
+
+    Polynomial operator*(int scalar) const {
+        std::vector<int> output(this->p.size(), 0);
+
+        for(auto i = 0; i < this->p.size(); ++i) {
+            output[i] = this->p[i]*scalar;
+        }
+
+        return Polynomial(output);
+    }
     
     Polynomial trim_end() {
         std::vector<int> output;
-        for(auto i = 0; i < actual_degree+1; ++i) {
+        for(auto i = 0; i < degree+1; ++i) {
             output.push_back(this->p[i]);
         }
 
@@ -130,10 +142,6 @@ public:
         return this->p.size();
     }
 
-    int lead_coeff() {
-        return this->p[this->p.size()-1];
-    }
-
     void print() {
         for(auto elem : this->p) {
             std::cout << elem << " ";
@@ -150,14 +158,14 @@ public:
         int max_size = std::max(p1.size(), p2.size());
         Polynomial zero_poly = zero_polynomial(max_size);
 
-        if(p2.actual_degree > p1.actual_degree) {
+        if(p2.degree > p1.degree) {
             return std::make_pair(zero_poly, p1.pad_to_length(max_size));
         }
 
         Polynomial trim_p1 = p1.trim_end();
         Polynomial trim_p2 = p2.trim_end();
 
-        int coefficient = trim_p1.lead_coeff()/trim_p2.lead_coeff();
+        int coefficient = trim_p1.lead_coeff/trim_p2.lead_coeff;
         int degree = trim_p1.size()-1 - (trim_p2.size()-1);
         std::vector<int> on_top_vec(degree+1, 0);
         on_top_vec[degree] = coefficient;
@@ -191,28 +199,65 @@ public:
             Polynomial compute_rem_b = std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
             return euclidean_algorithm(p2, remainder, compute_p2, std::make_pair(compute_rem_a, compute_rem_b));
     }
+
+    static std::tuple<Polynomial, Polynomial> psuedo_div(Polynomial A, Polynomial B);
+
 };
 
+Polynomial operator*(int scalar, const Polynomial& poly) {
+    return poly*scalar;
+}
+
+// Returns a tuple (Q, R) such that
+// d^(m-n+1)*A = B*Q + R
+// where m is the degree of A, n is the degree of B, d is the leading coefficient of B,
+// and the degree of R < degree of B
+std::tuple<Polynomial, Polynomial> Polynomial::psuedo_div(Polynomial A, Polynomial B) {
+    int m = A.degree;
+    int n = B.degree;
+    int d = B.lead_coeff;
+
+    if(m < n) {
+        return std::make_pair(zero_polynomial(1), A);
+    }
+
+    Polynomial R = A;
+    Polynomial Q = Polynomial({0});
+    int e = m - n + 1;
+
+    while(true) {
+        if(R.degree < B.degree) {
+            int q = std::pow(d, e);
+            Q = q*Q;
+            R = q*R;
+
+            return std::make_pair(Q, R);
+        }
+
+        std::vector<int> S_vec(R.degree-B.degree+1, 0);
+        S_vec[R.degree-B.degree] = R.lead_coeff;
+        Polynomial S = Polynomial(S_vec);
+
+        Q = d*Q + S;
+        R = d*R - S*B;
+        e = e-1;
+    }
+}
+
 int main() {
-    std::vector<int> p2_vec{1,1,1};
+    std::vector<int> p2_vec{1,1,5};
     std::vector<int> p1_vec{2,0,0,2,5,6};
     Polynomial p2 = Polynomial(p2_vec);
     Polynomial p1 = Polynomial(p1_vec);
 
-    auto output = Polynomial::polynomial_div(p1,p2);
+    auto output = Polynomial::psuedo_div(p1,p2);
 
     std::cout << "Quotient: ";
-    for(int i = 0; i < std::get<0>(output).size(); ++i) {
-        std::cout << std::get<0>(output).p[i] << " ";
-    } 
-    std::cout << std::endl;
+    std::get<0>(output).print();
 
     std::cout << "Remainder: ";
-    for(int i = 0; i < std::get<1>(output).size(); ++i) {
-        std::cout << std::get<1>(output).p[i] << " ";
-    } 
-    std::cout << std::endl;
-    
+    std::get<1>(output).print();
+
     return 0;
 }
 
