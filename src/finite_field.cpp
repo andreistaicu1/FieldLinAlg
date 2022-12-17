@@ -1,6 +1,7 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <numeric>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,6 +117,16 @@ public:
         return Polynomial(output);
     }
     
+    Polynomial operator/(int scalar) const {
+        std::vector<int> output(this->p.size(), 0);
+
+        for(auto i = 0; i < p.size(); ++i) {
+            output[i] = p[i]/scalar;
+        }
+
+        return output;
+    }
+
     Polynomial trim_end() {
         std::vector<int> output;
         for(auto i = 0; i < degree+1; ++i) {
@@ -142,6 +153,14 @@ public:
         return this->p.size();
     }
 
+    int cont() {
+        int result = p[0];
+        for(auto i = 1; i < degree; ++i) {
+            result = std::gcd(result, p[i]);
+        }
+
+        return result;
+    }
     void print() {
         for(auto elem : this->p) {
             std::cout << elem << " ";
@@ -201,6 +220,8 @@ public:
     }
 
     static std::tuple<Polynomial, Polynomial> psuedo_div(Polynomial A, Polynomial B);
+    static Polynomial gcd(Polynomial A, Polynomial B);
+
 
 };
 
@@ -244,19 +265,51 @@ std::tuple<Polynomial, Polynomial> Polynomial::psuedo_div(Polynomial A, Polynomi
     }
 }
 
+// Returns the GCD of A and B (sub-resultant gcd)
+Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
+    if(B.degree > A.degree) {
+        return gcd(B, A);
+    }
+
+    if(B == zero_polynomial(1)) {
+        return A;
+    }
+
+    int a = A.cont();
+    int b = B.cont();
+    int d = std::gcd(a, b);
+
+    A = A/a;
+    B = B/b;
+
+    int g = 1;
+    int h = 1;
+
+    while(true) {
+        int delta = A.degree - B.degree;
+        Polynomial R = std::get<1>(psuedo_div(A, B));
+
+        if(R == zero_polynomial(1)) {
+            return d*B/B.cont();
+        }
+        if(R.degree == 1) {
+            return d*Polynomial({1});
+        }
+
+        A = B;
+        B = R/(g*std::pow(h, delta));
+        g = A.lead_coeff;
+        h = std::pow(h, 1-delta)*std::pow(g, delta);
+    }
+}
+
 int main() {
-    std::vector<int> p2_vec{1,1,5};
-    std::vector<int> p1_vec{2,0,0,2,5,6};
+    std::vector<int> p2_vec{1,1,1};
+    std::vector<int> p1_vec{0,0,2,2,2};
     Polynomial p2 = Polynomial(p2_vec);
     Polynomial p1 = Polynomial(p1_vec);
 
-    auto output = Polynomial::psuedo_div(p1,p2);
-
-    std::cout << "Quotient: ";
-    std::get<0>(output).print();
-
-    std::cout << "Remainder: ";
-    std::get<1>(output).print();
+    Polynomial::gcd(p2,p1).print();
 
     return 0;
 }
