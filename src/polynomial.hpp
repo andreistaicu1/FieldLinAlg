@@ -2,6 +2,7 @@
 #define polynomialH
 #include <tuple>
 #include <vector>
+#include "doctest.h"
 
 class Polynomial {
 public:

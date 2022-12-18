@@ -15,6 +15,13 @@
 
 #include "polynomial.hpp"
 
+#include "doctest.h"
+/*
+TEST_CASE("polynomial") {
+    SUBCASE("lead_coeff") {
+        CHECK(Polynomial({1,2,3,0,0}).lead_coeff == 3);
+    }
+}*/
 Polynomial::Polynomial(std::vector<int> p) : p(p) {
     int last = 0;
     for(auto i = 0; i < this->p.size(); ++i) {

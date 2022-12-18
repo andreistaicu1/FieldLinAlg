@@ -15,6 +15,8 @@
 #include "min_polynomial.cpp"
 #include "polynomial.hpp"
 
+#include "doctest.h"
+
 
 struct PolynomialHasher {
     int operator()(const Polynomial &polynomial) const {
@@ -169,3 +171,21 @@ public:
         
     };
 };
+
+TEST_CASE("finite field") {
+    SUBCASE("p_char = 5, degree = 1") {
+        finite_field ff = finite_field(5, 1);
+
+        SUBCASE("inverse_mod_p") {
+            CHECK(ff.inverse_mod_p(1) == 1);
+            CHECK(ff.inverse_mod_p(2) == 3);
+            CHECK(ff.inverse_mod_p(4) == 4);
+            CHECK(ff.inverse_mod_p(39) == 4);
+            CHECK(ff.inverse_mod_p(113) == 2);
+        }
+
+        SUBCASE("euclidean_algorithm") {
+
+        }
+    }
+}
