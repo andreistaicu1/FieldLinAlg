@@ -19,6 +19,11 @@ public:
     int degree;
     int lead_coeff;
 
+    Polynomial(){
+        std::vector<int> output(1, 0);
+        Polynomial(output);
+    }
+
     Polynomial(std::vector<int> p) : p(p) {
         int last = 0;
         for(auto i = 0; i < this->p.size(); ++i) {
@@ -147,6 +152,12 @@ public:
             }
         }
         return Polynomial(output);
+    }
+
+    void mod(int p) {
+        for (auto i = 0; i < this->p.size(); i++){
+            this->p[i] = ((this->p[i] % p) + p) % p;
+        }
     }
 
     int size() {

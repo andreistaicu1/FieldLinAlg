@@ -8,17 +8,25 @@
 #include <assert.h>
 
 #include <iostream>
-#include "min_polynomial.cpp"
 #include <tuple>
+
+#include "min_polynomial.cpp"
+#include "polynomial.cpp"
 
 class finite_field {
 public:
     int p_char, degree;
-    std::vector<int> min_polynomial;
+    Polynomial min_polynomial;
+
+    finite_field() {
+        this->p_char = 0;
+        this->degree = 0;
+        this->min_polynomial = Polynomial();
+    }
     
     finite_field(int p_char, int degree) : p_char(p_char), degree(degree) {
         std::vector<int> temp(10, 0);
-        this->min_polynomial = temp;
+        this->min_polynomial = Polynomial(temp);
     };
 
     bool operator== (finite_field const &other) {
@@ -26,9 +34,6 @@ public:
     }
 
     int inverse_mod_p(int val) {
-        assert(val % this->p_char == val);
-        assert(val > 0);
-
         int inverse = euclidean_algorithm(p_char, val, std::make_pair(1, 0), std::make_pair(0, 1));
         return (((inverse % this->p_char) + this->p_char) % this->p_char);
     }
@@ -62,35 +67,32 @@ public:
 
 class ff_element {
 public:
-    std::vector<int> polynomial;
+    Polynomial polynomial;
     finite_field ff;
 
-    ff_element(std::vector<int> polynomial, finite_field ff) : polynomial(polynomial), ff(ff) {};
-    ff_element(finite_field ff) : ff(ff) {
-        std::vector<int> zeroes(ff.degree, 0);
-        this->polynomial = zeroes;
+    ff_element(Polynomial polynomial, finite_field ff) {
+        assert(polynomial.size() == ff.degree);
+        this->polynomial = polynomial;
+        this->ff = ff;
     };
+    ff_element(finite_field ff) : polynomial(Polynomial::zero_polynomial(ff.degree)), ff(ff) {};
 
     ff_element operator+ (ff_element const &other) {
         assert(this->ff == other.ff);
 
-        ff_element output = ff_element(this->ff);
-        for (auto i = 0; i < this->ff.degree; i++){
-            output.polynomial[i] = (this->polynomial[i]+other.polynomial[i]) % this->ff.p_char;
-        }
-        
-        return output;
+        Polynomial output = this->polynomial + other.polynomial;
+        output.mod(ff.p_char);
+
+        return ff_element(output, ff);
     };
 
     ff_element operator- (ff_element const &other) {
         assert(this->ff == other.ff);
-        
-        ff_element output = ff_element(this->ff);
-        for (auto i = 0; i < this->ff.degree; i++){
-            output.polynomial[i] = ((this->polynomial[i] - other.polynomial[i]) % this->ff.p_char + this->ff.p_char) % this->ff.p_char;
-        }
 
-        return output;
+        Polynomial output = this->polynomial - other.polynomial;
+        output.mod(ff.p_char);
+
+        return ff_element(output, ff);
     };
 
     ff_element operator* (ff_element const &other) {
