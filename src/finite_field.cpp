@@ -166,10 +166,19 @@ public:
 
     ff_element operator/ (ff_element const &other) {
         assert(this->ff == other.ff);
+
+        // Get address of other, cast to void *, get back the void * of the inverse, cast to ff_element *
+        ff_element *inverse_ad = (ff_element *) ff.get_inverse((void *) &other); // This is jank
+        if (inverse_ad == nullptr) {
+            ff_element * inverse_ad = make_inverse(other);
+        }
         
-        ff_element output = ff_element(this->ff);
-        
+        return (*this) * (*inverse_ad);    // Is this even correct code?
     };
+
+    ff_element * make_inverse(ff_element element) {
+        return nullptr;
+    }
 };
 
 TEST_CASE("finite field") {

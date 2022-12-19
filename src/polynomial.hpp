@@ -4,6 +4,9 @@
 #include <vector>
 #include "doctest.h"
 
+const std::vector<int> ZERO = {0};
+const std::vector<int> ONE = {1};
+
 class Polynomial {
 public:
     std::vector<int> p;
