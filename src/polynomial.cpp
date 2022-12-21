@@ -16,12 +16,7 @@
 #include "polynomial.hpp"
 
 #include "doctest.h"
-/*
-TEST_CASE("polynomial") {
-    SUBCASE("lead_coeff") {
-        CHECK(Polynomial({1,2,3,0,0}).lead_coeff == 3);
-    }
-}*/
+
 Polynomial::Polynomial(std::vector<int> p) : p(p) {
     int last = 0;
     for(auto i = 0; i < this->p.size(); ++i) {
@@ -59,7 +54,7 @@ void Polynomial::operator=(const Polynomial& other) {
     lead_coeff = other.lead_coeff;
 }
 
-Polynomial Polynomial::operator+(const Polynomial& other) {
+Polynomial Polynomial::operator+(const Polynomial& other) const {
     auto max = std::max(this->p.size(), other.p.size());
 
     std::vector<int> output(max,0);
@@ -80,7 +75,7 @@ Polynomial Polynomial::operator+(const Polynomial& other) {
     return Polynomial(output);
 };
 
-Polynomial Polynomial::operator-(const Polynomial& other) {
+Polynomial Polynomial::operator-(const Polynomial& other) const {
     auto max = std::max(this->p.size(), other.p.size());
 
     std::vector<int> output(max,0);
@@ -101,7 +96,7 @@ Polynomial Polynomial::operator-(const Polynomial& other) {
     return Polynomial(output);
 };
 
-Polynomial Polynomial::operator*(const Polynomial& other){
+Polynomial Polynomial::operator*(const Polynomial& other) const {
     
     int new_degree = this->degree + other.degree + 1;
     std::vector<int> output(new_degree, 0);
@@ -177,7 +172,7 @@ int Polynomial::cont() {
 
     return result;
 }
-void Polynomial::print() {
+void Polynomial::print() const {
     for(auto elem : this->p) {
         std::cout << elem << " ";
     }
@@ -188,30 +183,6 @@ Polynomial Polynomial::zero_polynomial(int length) {
     std::vector<int> output(length, 0);
     return Polynomial(output);
 }
-
-/*
-std::tuple<Polynomial, Polynomial> Polynomial::polynomial_div(Polynomial p1, Polynomial p2) {
-    int max_size = std::max(p1.size(), p2.size());
-    Polynomial zero_poly = zero_polynomial(max_size);
-
-    if(p2.degree > p1.degree) {
-        return std::make_pair(zero_poly, p1.pad_to_length(max_size));
-    }
-
-    Polynomial trim_p1 = p1.trim_end();
-    Polynomial trim_p2 = p2.trim_end();
-
-    int coefficient = trim_p1.lead_coeff/trim_p2.lead_coeff;
-    int degree = trim_p1.size()-1 - (trim_p2.size()-1);
-    std::vector<int> on_top_vec(degree+1, 0);
-    on_top_vec[degree] = coefficient;
-    Polynomial on_top = Polynomial(on_top_vec);
-
-    Polynomial remainder = (trim_p1 - (on_top*trim_p2)).trim_end();
-    
-    std::tuple<Polynomial, Polynomial> next_output = polynomial_div(remainder, trim_p2);
-    return std::make_pair((on_top + std::get<0>(next_output)).pad_to_length(max_size), std::get<1>(next_output).pad_to_length(max_size));
-}*/
 
 /*
 Polynomial Polynomial::euclidean_algorithm(Polynomial p1, Polynomial p2, std::tuple<Polynomial, Polynomial> compute_p1, 
@@ -260,6 +231,10 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
     int e = m - n + 1;
 
     while(true) {
+        std::cout << "loop" << std::endl;
+        Q.print();
+        R.print();
+        B.print();
         if(R.degree < B.degree) {
             int q = std::pow(d, e);
             Q = q*Q;
@@ -276,6 +251,15 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
         R = d*R - S*B;
         e = e-1;
     }
+}
+
+TEST_CASE("pseudo_div") {
+    Polynomial p1 = Polynomial({1,3});
+    Polynomial p2 = Polynomial({4,0,0,0});
+    auto triple = Polynomial::pseudo_div(p1, p2);
+    std::get<0>(triple).print();
+    std::get<1>(triple).print();
+    std::cout << std::get<2>(triple) << std::endl;
 }
 
 // Returns the GCD of A and B
@@ -309,4 +293,3 @@ Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
         B = R/R.cont();
     }
 }
-

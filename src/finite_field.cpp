@@ -17,30 +17,13 @@
 
 #include "doctest.h"
 
-
-struct PolynomialHasher {
-    int operator()(const Polynomial &polynomial) const {
-        const std::vector<int> trimmed = polynomial.trim_end().p;
-        int hash = trimmed.size();
-        for(auto &i : trimmed) {
-            hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        }
-        return hash;
-    }
-};
+const Polynomial ZERO_P = Polynomial(Polynomial::ZERO);
+const Polynomial ONE_P = Polynomial(Polynomial::ONE);
 
 class finite_field {
 public:
     int p_char, degree;
     Polynomial min_polynomial;
-    std::unordered_map<Polynomial, void *, PolynomialHasher> elements;
-    std::unordered_map<void *, void *> inverses;
-
-    ~finite_field() {
-        for(auto it : elements) {
-            free(it.second);
-        }
-    }
 
     finite_field() {
         this->p_char = 0;
@@ -52,33 +35,11 @@ public:
         this->min_polynomial = Polynomial::zero_polynomial(1);
     };
 
-    bool operator== (finite_field const &other) {
+    bool operator== (finite_field const &other) const {
         return this->p_char == other.p_char && this->degree == other.degree;
     }
 
-    void set_element(Polynomial poly, void *element){
-        this->elements[poly] = element;
-    }
-
-    void * get_element(Polynomial poly){
-        if (elements.find(poly) != elements.end()){
-            return elements[poly];
-        }
-        return nullptr;
-    }
-
-    void set_inverse(void *element, void *inverse){
-        this->inverses[element] = inverse;
-    }
-
-    void * get_inverse(void *element){
-        if (inverses.find(element) != inverses.end()){
-            return inverses[element];
-        }
-        return nullptr;
-    }
-
-    int inverse_mod_p(int val) {
+    int inverse_mod_p(int val) const {
         if (val == 1){
             return val;
         }
@@ -86,7 +47,7 @@ public:
         return (((inverse % p_char) + p_char) % p_char);
     }
 
-    int euclidean_algorithm(int a, int b, std::tuple<int, int> compute_a, std::tuple<int, int> compute_b){
+    int euclidean_algorithm(int a, int b, std::tuple<int, int> compute_a, std::tuple<int, int> compute_b) const {
         std::div_t div_n = std::div(a, b);
         int q = div_n.quot;
         int r = div_n.rem;
@@ -105,79 +66,139 @@ public:
 };
 
 class ff_element {
-private:
+public:
+    Polynomial polynomial;
+    finite_field ff;
+    
     ff_element(Polynomial polynomial, finite_field ff) {
-        assert(polynomial.p.size() <= ff.degree);
-        this->polynomial = polynomial;
+        assert(polynomial.degree <= ff.degree);
+        polynomial.mod(ff.p_char);
+        this->polynomial = polynomial.trim_end();
         this->ff = ff;
     };
 
     ff_element(finite_field ff) : polynomial(Polynomial::zero_polynomial(ff.degree)), ff(ff) {};
 
-public:
-    Polynomial polynomial;
-    finite_field ff;
-
-    static ff_element get_ff_element(Polynomial polynomial, finite_field ff) {
-        ff_element * element = (ff_element *) ff.get_element(polynomial);
-        if(element != nullptr) {
-            return *element;
-        }
-
-        ff_element* new_elem = new ff_element(polynomial, ff);
-        ff.set_element(polynomial, new_elem);
-        return *new_elem;
+    bool operator==(ff_element const &other) const {
+        return polynomial==other.polynomial && ff==other.ff;
     }
 
-    ff_element operator+ (ff_element const &other) {
+    ff_element operator= (ff_element const &other) {
+        assert(this->ff == other.ff);
+
+        this->polynomial = other.polynomial;
+        return (*this);
+    }
+
+    ff_element operator+ (ff_element const &other) const {
         assert(this->ff == other.ff);
 
         Polynomial output = this->polynomial + other.polynomial;
         output.mod(this->ff.p_char);
 
-        return get_ff_element(output, ff);
+        return ff_element(output, ff);
     };
 
-    ff_element operator- (ff_element const &other) {
+    ff_element operator- (ff_element const &other) const {
         assert(this->ff == other.ff);
 
         Polynomial output = this->polynomial - other.polynomial;
         output.mod(this->ff.p_char);
 
-        return get_ff_element(output, this->ff);
+        return ff_element(output, this->ff);
     };
 
-    ff_element operator* (ff_element const &other) {
+    ff_element operator* (ff_element const &other) const {
         assert(this->ff == other.ff);
-
-        Polynomial p = Polynomial::zero_polynomial(1);
 
         std::tuple<Polynomial, Polynomial, int> triple = Polynomial::pseudo_div(polynomial*other.polynomial, ff.min_polynomial);
 
         Polynomial remainder = std::get<1>(triple);
-        int c = std::get<2>(triple);
         remainder.mod(this->ff.p_char);
 
-        Polynomial output = remainder * (this->ff.inverse_mod_p(c % this->ff.p_char));
+        int c = std::get<2>(triple);
+        int c_inverse = ff.inverse_mod_p(c % ff.p_char);
+
+        Polynomial output = c_inverse*remainder;
         output.mod(this->ff.p_char);
 
-        return get_ff_element(output, this->ff);
+        return ff_element(output, this->ff);
     };
 
-    ff_element operator/ (ff_element const &other) {
+    ff_element operator/ (ff_element const &other) const {
         assert(this->ff == other.ff);
+        assert(!(ZERO_P == other.polynomial));
 
-        // Get address of other, cast to void *, get back the void * of the inverse, cast to ff_element *
-        ff_element *inverse_ad = (ff_element *) ff.get_inverse((void *) &other); // This is jank
-        if (inverse_ad == nullptr) {
-            ff_element * inverse_ad = make_inverse(other);
-        }
-        
-        return (*this) * (*inverse_ad);    // Is this even correct code?
+        std::cout << "past the asserts" << std::endl;
+        ff_element inverse = other.make_inverse();
+
+        std::cout << "inverse: " << std::endl;
+        inverse.polynomial.print();
+
+        ((*this)*inverse).polynomial.print();
+
+        return (*this) * inverse;
     };
 
-    ff_element * make_inverse(ff_element element) {
-        return nullptr;
+    ff_element make_inverse() const {
+        if (this->polynomial == ONE_P){
+            return *this;
+        }
+        return ff_element(euclidean_algorithm(ff.min_polynomial, polynomial), ff);
+    }
+    
+    Polynomial euclidean_algorithm(Polynomial elemA, Polynomial elemB) const {
+        Polynomial A = elemA;
+        Polynomial B = elemB;
+        A.print();
+        B.print();
+
+        if(B.degree > A.degree) {
+            return euclidean_algorithm(elemB, elemA);
+        }
+
+        std::cout << "in the euclidean algorithm" << std::endl;
+
+        std::tuple<Polynomial, Polynomial> compute_A = std::make_pair(Polynomial::ONE, Polynomial::ZERO);
+        std::tuple<Polynomial, Polynomial> compute_B = std::make_pair(Polynomial::ZERO, Polynomial::ONE);
+
+        assert(!(B == Polynomial::ZERO));
+
+        while(true) {
+            auto division = Polynomial::pseudo_div(A, B);
+
+            int delta = std::get<2>(division);
+            int delta_inverse = ff.inverse_mod_p(delta);
+            std::cout << "delta: " << delta << std::endl;
+            std::cout << "delta_inverse: " << delta_inverse << std::endl;
+
+            Polynomial Q = delta_inverse*std::get<0>(division);
+            Polynomial R = delta_inverse*std::get<1>(division);
+            Q.mod(ff.p_char);
+            R.mod(ff.p_char);
+            std::cout << "Q: " << std::endl;
+            Q.print();
+            std::cout << "R: " << std::endl;
+            R.print();
+
+            Polynomial compute_r_0 = std::get<0>(compute_A) - std::get<0>(compute_B)*Q;
+            Polynomial compute_r_1 = std::get<1>(compute_A) - std::get<1>(compute_B)*Q;
+            compute_r_0.mod(ff.p_char);
+            compute_r_1.mod(ff.p_char);
+            std::cout << "compute_r_0: " <<std::endl;
+            compute_r_0.print();
+            std::cout << "compute_r_1: " <<std::endl;
+            compute_r_1.print();
+
+            if(R == Polynomial::ONE) {
+                return compute_r_1;
+            }
+
+            compute_B = std::make_pair(compute_r_0, compute_r_1);
+
+            A = B;
+            B = R;
+        }
     }
 };
 
@@ -196,5 +217,44 @@ TEST_CASE("finite field") {
         SUBCASE("euclidean_algorithm") {
 
         }
+    }
+}
+
+TEST_CASE("ff_element") {
+    finite_field ff = finite_field(5, 3);
+    ff.min_polynomial = Polynomial({1,2,0,1});
+
+    Polynomial p1 = Polynomial({1,2,3});
+    ff_element elem1 = ff_element(p1, ff);
+
+    Polynomial p2 = Polynomial({2,4,6});
+    ff_element elem2 = ff_element(p2, ff);
+
+    Polynomial p3 = Polynomial({2,1,2});
+    ff_element elem3 = ff_element(p3, ff);
+
+
+    ff_element zero_e = ff_element(ZERO_P, ff);
+
+    SUBCASE("adding ff_element") {
+        CHECK((elem1 + elem1) == elem2);
+    }
+
+    SUBCASE("subtracting ff_element") {
+        CHECK((elem1 - elem1) == ff_element(ZERO_P, ff));
+    }
+
+    SUBCASE("multiplication") {
+        Polynomial p4 = Polynomial({0,0,3});
+        ff_element elem4 = ff_element(p4, ff);
+
+        CHECK(elem1*elem3 == elem4);
+    }
+
+    SUBCASE("division") {
+        Polynomial p4 = Polynomial({4,0,1});
+        ff_element elem4 = ff_element(p4, ff);
+
+        //CHECK(elem1/elem3 == elem4);
     }
 }
