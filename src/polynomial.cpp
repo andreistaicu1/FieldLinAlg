@@ -18,15 +18,19 @@
 #include "doctest.h"
 
 Polynomial::Polynomial(std::vector<int> p) : p(p) {
-    int last = 0;
-    for(auto i = 0; i < this->p.size(); ++i) {
-        if(this->p[i] != 0) {
-            last = i;
-        }
-    }
-    this->degree = last;
-    this->lead_coeff = this->p[this->degree];
+    calculate();
 };
+
+void Polynomial::calculate() {
+    int last = 0;
+        for(auto i = 0; i < this->p.size(); ++i) {
+            if(this->p[i] != 0) {
+                last = i;
+            }
+        }
+        this->degree = last;
+        this->lead_coeff = this->p[this->degree];
+}
 
 Polynomial::Polynomial(){
     std::vector<int> output(1, 0);
@@ -156,8 +160,9 @@ Polynomial Polynomial::pad_to_length(int length) {
 
 void Polynomial::mod(int p) {
     for (auto i = 0; i < this->p.size(); i++){
-        this->p[i] = ((this->p[i] % p) + p) % p;
+        this->p[i] = ((this->p[i] % p)+ p) % p;
     }
+    calculate();
 }
 
 int Polynomial::size() {
@@ -184,31 +189,6 @@ Polynomial Polynomial::zero_polynomial(int length) {
     return Polynomial(output);
 }
 
-/*
-Polynomial Polynomial::euclidean_algorithm(Polynomial p1, Polynomial p2, std::tuple<Polynomial, Polynomial> compute_p1, 
-    std::tuple<Polynomial, Polynomial> compute_p2){
-
-        auto output = polynomial_div(p1, p2);
-        Polynomial quotient = std::get<0>(output);
-        Polynomial remainder = std::get<1>(output);
-
-        // This function should only be input relatively prime things
-        assert(!(remainder == zero_polynomial(1)));
-
-        std::vector<int> one_vec{1};
-        Polynomial one = Polynomial(one_vec);
-
-        // Checks if the remainder is one
-        if (remainder == one){
-            return std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
-        }
-
-        Polynomial compute_rem_a = std::get<0>(compute_p1) - (std::get<0>(compute_p2) * quotient);
-        Polynomial compute_rem_b = std::get<1>(compute_p1) - (std::get<1>(compute_p2) * quotient);
-        return euclidean_algorithm(p2, remainder, compute_p2, std::make_pair(compute_rem_a, compute_rem_b));
-}
-*/
-
 Polynomial operator*(int scalar, const Polynomial& poly) {
     return poly*scalar;
 }
@@ -231,11 +211,7 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
     int e = m - n + 1;
 
     while(true) {
-        std::cout << "loop" << std::endl;
-        Q.print();
-        R.print();
-        B.print();
-        if(R.degree < B.degree) {
+        if(R.degree < B.degree || R == zero_polynomial(1)) {
             int q = std::pow(d, e);
             Q = q*Q;
             R = q*R;
@@ -254,12 +230,30 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
 }
 
 TEST_CASE("pseudo_div") {
-    Polynomial p1 = Polynomial({1,3});
-    Polynomial p2 = Polynomial({4,0,0,0});
-    auto triple = Polynomial::pseudo_div(p1, p2);
-    std::get<0>(triple).print();
-    std::get<1>(triple).print();
-    std::cout << std::get<2>(triple) << std::endl;
+    SUBCASE("1+3*x, 4") {
+        Polynomial p1 = Polynomial({1,3});
+        Polynomial p2 = Polynomial({4,0,0,0});
+        auto triple = Polynomial::pseudo_div(p1, p2);
+
+        Polynomial out1 = Polynomial({4,12});
+        Polynomial out2 = Polynomial({0});
+        CHECK(std::get<0>(triple) == out1);
+        CHECK(std::get<1>(triple) == out2);
+        CHECK(std::get<2>(triple) == std::pow(4, 2));
+    }
+
+    SUBCASE("2+x+2*x^2, 4") {
+        Polynomial p3 = Polynomial({2,1,2});
+        Polynomial p4 = Polynomial({4,0,0,0});
+        auto triple2 = Polynomial::pseudo_div(p3, p4);
+        
+        Polynomial outA = Polynomial({32,16,32});
+        Polynomial outB = Polynomial({0});
+
+        CHECK(std::get<0>(triple2) == outA);
+        CHECK(std::get<1>(triple2) == outB);
+        CHECK(std::get<2>(triple2) == std::pow(4,3));
+    }
 }
 
 // Returns the GCD of A and B

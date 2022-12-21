@@ -17,6 +17,8 @@
 
 #include "doctest.h"
 
+class ff_element;
+
 const Polynomial ZERO_P = Polynomial(Polynomial::ZERO);
 const Polynomial ONE_P = Polynomial(Polynomial::ONE);
 
@@ -129,13 +131,7 @@ public:
         assert(this->ff == other.ff);
         assert(!(ZERO_P == other.polynomial));
 
-        std::cout << "past the asserts" << std::endl;
         ff_element inverse = other.make_inverse();
-
-        std::cout << "inverse: " << std::endl;
-        inverse.polynomial.print();
-
-        ((*this)*inverse).polynomial.print();
 
         return (*this) * inverse;
     };
@@ -150,14 +146,10 @@ public:
     Polynomial euclidean_algorithm(Polynomial elemA, Polynomial elemB) const {
         Polynomial A = elemA;
         Polynomial B = elemB;
-        A.print();
-        B.print();
 
         if(B.degree > A.degree) {
             return euclidean_algorithm(elemB, elemA);
         }
-
-        std::cout << "in the euclidean algorithm" << std::endl;
 
         std::tuple<Polynomial, Polynomial> compute_A = std::make_pair(Polynomial::ONE, Polynomial::ZERO);
         std::tuple<Polynomial, Polynomial> compute_B = std::make_pair(Polynomial::ZERO, Polynomial::ONE);
@@ -168,30 +160,20 @@ public:
             auto division = Polynomial::pseudo_div(A, B);
 
             int delta = std::get<2>(division);
-            int delta_inverse = ff.inverse_mod_p(delta);
-            std::cout << "delta: " << delta << std::endl;
-            std::cout << "delta_inverse: " << delta_inverse << std::endl;
+            int delta_inverse = ff.inverse_mod_p(((delta % ff.p_char)+ ff.p_char) % ff.p_char);
 
             Polynomial Q = delta_inverse*std::get<0>(division);
             Polynomial R = delta_inverse*std::get<1>(division);
             Q.mod(ff.p_char);
             R.mod(ff.p_char);
-            std::cout << "Q: " << std::endl;
-            Q.print();
-            std::cout << "R: " << std::endl;
-            R.print();
 
             Polynomial compute_r_0 = std::get<0>(compute_A) - std::get<0>(compute_B)*Q;
             Polynomial compute_r_1 = std::get<1>(compute_A) - std::get<1>(compute_B)*Q;
             compute_r_0.mod(ff.p_char);
             compute_r_1.mod(ff.p_char);
-            std::cout << "compute_r_0: " <<std::endl;
-            compute_r_0.print();
-            std::cout << "compute_r_1: " <<std::endl;
-            compute_r_1.print();
-
-            if(R == Polynomial::ONE) {
-                return compute_r_1;
+            
+            if(R.degree == 0) {
+                return ff.inverse_mod_p(R.lead_coeff)*compute_r_1;
             }
 
             compute_B = std::make_pair(compute_r_0, compute_r_1);
@@ -255,6 +237,7 @@ TEST_CASE("ff_element") {
         Polynomial p4 = Polynomial({4,0,1});
         ff_element elem4 = ff_element(p4, ff);
 
-        //CHECK(elem1/elem3 == elem4);
+        (elem1/elem3).polynomial.print();
+        CHECK(elem1/elem3 == elem4);
     }
 }

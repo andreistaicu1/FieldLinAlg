@@ -16,6 +16,7 @@ public:
     Polynomial(std::vector<int> p);
     Polynomial();
 
+    void calculate();
     bool operator==(const Polynomial& other) const;
     void operator=(const Polynomial& other);
     Polynomial operator+(const Polynomial& other) const;
