@@ -8,6 +8,7 @@
 
 #include "finite_field.cpp"
 #include "polynomial.cpp"
+#include "integers.cpp"
 
 int normal_main(){
     int p = 23;
@@ -16,10 +17,14 @@ int normal_main(){
     
     finite_field ff = finite_field(p, 5);
 
+    Polynomial p1 = Polynomial({1,2});
+
     for (int val : values){
-        std::cout << ff.inverse_mod_p(val) << " ";
+        std::cout << inverse_mod_p(val, 23) << " ";
     }
     std::cout << std::endl;
+
+    std::cout << inverse_mod_p(2, 5) << std::endl;
 
     return 0;
 }

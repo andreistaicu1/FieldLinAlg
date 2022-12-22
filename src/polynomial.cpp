@@ -9,11 +9,10 @@
 
 #include <iostream>
 
-#include "min_polynomial.cpp"
-
 #include <tuple>
 
 #include "polynomial.hpp"
+#include "integers.hpp"
 
 #include "doctest.h"
 
@@ -169,9 +168,19 @@ Polynomial Polynomial::derivative() const {
 
 void Polynomial::mod(int p) {
     for (auto i = 0; i < this->p.size(); i++){
-        this->p[i] = ((this->p[i] % p)+ p) % p;
+        this->p[i] = mod_p(this->p[i], p);
     }
     calculate();
+}
+
+// Same as mod but returns a new Polynomial instead of modifying the current one
+Polynomial Polynomial::pure_mod(int prime) const {
+    std::vector<int> output(degree+1, 0);
+    for (auto i = 0; i < degree+1; ++i){
+        output[i] = mod_p(p[i], prime);
+    }
+
+    return Polynomial(output);
 }
 
 int Polynomial::size() {
@@ -238,6 +247,18 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
     }
 }
 
+std::tuple<Polynomial, Polynomial> Polynomial::division_mod_p(Polynomial A, Polynomial B, int p) {
+    auto triple = pseudo_div(A, B);
+
+    int delta = std::get<2>(triple);
+    int delta_inverse = inverse_mod_p(mod_p(delta, p), p);
+
+    Polynomial Q = (delta_inverse*std::get<0>(triple)).pure_mod(p);
+    Polynomial R = (delta_inverse*std::get<1>(triple)).pure_mod(p);
+    
+    return std::make_pair(Q, R);
+}
+
 // Returns the GCD of A and B
 Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
     if(B.degree > A.degree) {
@@ -248,7 +269,7 @@ Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
         return A;
     }
 
-    int a = A.cont(); // Do we even need GCD since we are mod p?
+    int a = A.cont();
     int b = B.cont();
     int d = std::gcd(a, b);
 

@@ -6,9 +6,6 @@
 
 class Polynomial {
 public:
-    inline static const std::vector<int> ZERO = {0};
-    inline static const std::vector<int> ONE = {1};
-
     std::vector<int> p;
     int degree;
     int lead_coeff;
@@ -28,13 +25,15 @@ public:
     Polynomial operator/(int scalar) const;
     Polynomial derivative() const;
     void mod(int p);
+    Polynomial pure_mod(int p) const;
     int cont();
     int size();
     void print() const;
     static Polynomial zero_polynomial(int length);
     static std::tuple<Polynomial, Polynomial, int> pseudo_div(Polynomial A, Polynomial B);
+    static std::tuple<Polynomial, Polynomial> division_mod_p(Polynomial A, Polynomial B, int p);
     static Polynomial gcd(Polynomial A, Polynomial B);
 };
 
-Polynomial operator*(int scalar, const Polynomial& poly);
+extern Polynomial operator*(int scalar, const Polynomial& poly);
 #endif
