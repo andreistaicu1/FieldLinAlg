@@ -171,7 +171,7 @@ public:
             Polynomial compute_r_1 = std::get<1>(compute_A) - std::get<1>(compute_B)*Q;
             compute_r_0.mod(ff.p_char);
             compute_r_1.mod(ff.p_char);
-            
+
             if(R.degree == 0) {
                 return ff.inverse_mod_p(R.lead_coeff)*compute_r_1;
             }
@@ -215,7 +215,6 @@ TEST_CASE("ff_element") {
     Polynomial p3 = Polynomial({2,1,2});
     ff_element elem3 = ff_element(p3, ff);
 
-
     ff_element zero_e = ff_element(ZERO_P, ff);
 
     SUBCASE("adding ff_element") {
@@ -223,7 +222,7 @@ TEST_CASE("ff_element") {
     }
 
     SUBCASE("subtracting ff_element") {
-        CHECK((elem1 - elem1) == ff_element(ZERO_P, ff));
+        CHECK((elem1 - elem1) == zero_e);
     }
 
     SUBCASE("multiplication") {
@@ -234,10 +233,9 @@ TEST_CASE("ff_element") {
     }
 
     SUBCASE("division") {
-        Polynomial p4 = Polynomial({4,0,1});
+        Polynomial p4 = Polynomial({2,2,4});
         ff_element elem4 = ff_element(p4, ff);
 
-        (elem1/elem3).polynomial.print();
         CHECK(elem1/elem3 == elem4);
     }
 }
