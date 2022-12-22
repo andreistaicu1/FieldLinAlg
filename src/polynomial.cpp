@@ -158,6 +158,15 @@ Polynomial Polynomial::pad_to_length(int length) {
     return Polynomial(output);
 }
 
+Polynomial Polynomial::derivative() const {
+    std::vector<int> output(std::max(degree,1), 0);
+    for(auto i = 1; i < degree+1; ++i) {
+        output[i-1] = p[i]*i;
+    }
+
+    return Polynomial(output);
+}
+
 void Polynomial::mod(int p) {
     for (auto i = 0; i < this->p.size(); i++){
         this->p[i] = ((this->p[i] % p)+ p) % p;
@@ -229,33 +238,6 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
     }
 }
 
-TEST_CASE("pseudo_div") {
-    SUBCASE("1+3*x, 4") {
-        Polynomial p1 = Polynomial({1,3});
-        Polynomial p2 = Polynomial({4,0,0,0});
-        auto triple = Polynomial::pseudo_div(p1, p2);
-
-        Polynomial out1 = Polynomial({4,12});
-        Polynomial out2 = Polynomial({0});
-        CHECK(std::get<0>(triple) == out1);
-        CHECK(std::get<1>(triple) == out2);
-        CHECK(std::get<2>(triple) == std::pow(4, 2));
-    }
-
-    SUBCASE("2+x+2*x^2, 4") {
-        Polynomial p3 = Polynomial({2,1,2});
-        Polynomial p4 = Polynomial({4,0,0,0});
-        auto triple2 = Polynomial::pseudo_div(p3, p4);
-        
-        Polynomial outA = Polynomial({32,16,32});
-        Polynomial outB = Polynomial({0});
-
-        CHECK(std::get<0>(triple2) == outA);
-        CHECK(std::get<1>(triple2) == outB);
-        CHECK(std::get<2>(triple2) == std::pow(4,3));
-    }
-}
-
 // Returns the GCD of A and B
 Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
     if(B.degree > A.degree) {
@@ -285,5 +267,48 @@ Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
 
         A = B;
         B = R/R.cont();
+    }
+}
+
+TEST_CASE("polynomial") {
+    SUBCASE("derivative") {
+        Polynomial p = Polynomial({1,2,3,4});
+        Polynomial d1 = Polynomial({2,6,12});
+        Polynomial d2 = Polynomial({6,24});
+        Polynomial d3 = Polynomial({24});
+        Polynomial d4 = Polynomial({0});
+
+        CHECK(p.derivative() == d1);
+        CHECK(d1.derivative() == d2);
+        CHECK(d2.derivative() == d3);
+        CHECK(d3.derivative() == d4);
+        CHECK(d4.derivative() == d4);
+    }
+}
+
+TEST_CASE("pseudo_div") {
+    SUBCASE("1+3*x, 4") {
+        Polynomial p1 = Polynomial({1,3});
+        Polynomial p2 = Polynomial({4,0,0,0});
+        auto triple = Polynomial::pseudo_div(p1, p2);
+
+        Polynomial out1 = Polynomial({4,12});
+        Polynomial out2 = Polynomial({0});
+        CHECK(std::get<0>(triple) == out1);
+        CHECK(std::get<1>(triple) == out2);
+        CHECK(std::get<2>(triple) == std::pow(4, 2));
+    }
+
+    SUBCASE("2+x+2*x^2, 4") {
+        Polynomial p3 = Polynomial({2,1,2});
+        Polynomial p4 = Polynomial({4,0,0,0});
+        auto triple2 = Polynomial::pseudo_div(p3, p4);
+        
+        Polynomial outA = Polynomial({32,16,32});
+        Polynomial outB = Polynomial({0});
+
+        CHECK(std::get<0>(triple2) == outA);
+        CHECK(std::get<1>(triple2) == outB);
+        CHECK(std::get<2>(triple2) == std::pow(4,3));
     }
 }

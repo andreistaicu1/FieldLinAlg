@@ -26,6 +26,7 @@ public:
     Polynomial pad_to_length(int length);
     Polynomial operator*(int scalar) const;
     Polynomial operator/(int scalar) const;
+    Polynomial derivative() const;
     void mod(int p);
     int cont();
     int size();
