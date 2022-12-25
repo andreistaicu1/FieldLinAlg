@@ -273,6 +273,18 @@ std::tuple<Polynomial, Polynomial> Polynomial::division_mod_p(Polynomial A, Poly
     }
 }
 
+Polynomial Polynomial::gcd_mod_p(Polynomial A, Polynomial B, int p) {
+    while(true) {
+        if(B == zero_polynomial(1)) {
+            return A;
+        }
+
+        auto [Q, R] = division_mod_p(A, B, p);
+        A = B;
+        B = R;
+    }
+}
+
 // Returns the GCD of A and B
 Polynomial Polynomial::gcd(Polynomial A, Polynomial B) {
     if(B.degree > A.degree) {

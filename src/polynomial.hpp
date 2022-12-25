@@ -32,6 +32,7 @@ public:
     static Polynomial zero_polynomial(int length);
     static std::tuple<Polynomial, Polynomial, int> pseudo_div(Polynomial A, Polynomial B);
     static std::tuple<Polynomial, Polynomial> division_mod_p(Polynomial A, Polynomial B, int p);
+    static Polynomial gcd_mod_p(Polynomial A, Polynomial B, int p);
     static Polynomial gcd(Polynomial A, Polynomial B);
 };
 
