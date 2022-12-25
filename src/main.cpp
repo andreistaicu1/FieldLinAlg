@@ -9,6 +9,7 @@
 #include "finite_field.cpp"
 #include "polynomial.cpp"
 #include "integers.cpp"
+#include "min_polynomial.cpp"
 
 int normal_main(){
     int p = 23;

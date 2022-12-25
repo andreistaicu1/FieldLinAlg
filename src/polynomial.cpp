@@ -248,15 +248,29 @@ std::tuple<Polynomial, Polynomial, int> Polynomial::pseudo_div(Polynomial A, Pol
 }
 
 std::tuple<Polynomial, Polynomial> Polynomial::division_mod_p(Polynomial A, Polynomial B, int p) {
-    auto triple = pseudo_div(A, B);
+    Polynomial R = A;
+    Polynomial Q = Polynomial();
 
-    int delta = std::get<2>(triple);
-    int delta_inverse = inverse_mod_p(mod_p(delta, p), p);
+    int lead_B = B.lead_coeff;
+    int lead_B_inv = inverse_mod_p(lead_B, p);
 
-    Polynomial Q = (delta_inverse*std::get<0>(triple)).pure_mod(p);
-    Polynomial R = (delta_inverse*std::get<1>(triple)).pure_mod(p);
-    
-    return std::make_pair(Q, R);
+    while(true) {
+        if(R.degree < B.degree || R == zero_polynomial(1)) {
+            return std::make_pair(Q.pure_mod(p),R.pure_mod(p));
+        }
+
+        int lead_R = R.lead_coeff;
+        int lead_R_div_lead_B = mod_p(lead_R*lead_B_inv, p);
+
+        std::vector<int> S_vec(R.degree-B.degree+1,0);
+        S_vec[R.degree-B.degree] = lead_R_div_lead_B;
+        Polynomial S = Polynomial(S_vec);
+
+        Q = Q + S;
+        Q.mod(p);
+        R = R - (S*B);
+        R.mod(p);
+    }
 }
 
 // Returns the GCD of A and B

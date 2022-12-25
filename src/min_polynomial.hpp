@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <tuple>
+#include <iostream>
 #include "polynomial.hpp"
 #include "integers.hpp"
 
