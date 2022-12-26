@@ -95,6 +95,11 @@ PolynomialMod PolynomialMod::gcd(const PolynomialMod& Aorig, const PolynomialMod
     }
 }
 
+PolynomialMod PolynomialMod::mod(const PolynomialMod& modulus) {
+    auto [Q, R] = div((*this), modulus);
+    return R;
+}
+
 void PolynomialMod::print() const {
     poly.print();
 }

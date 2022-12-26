@@ -55,26 +55,38 @@ std::vector<std::tuple<int, PolynomialMod>> squarefree_factorization(PolynomialM
 }
 
 
-/*
 std::vector<std::tuple<int, PolynomialMod>> distinct_degree_factorization(PolynomialMod A) {
     int p = A.p;
 
     std::vector<std::tuple<int, PolynomialMod>> output;
 
     PolynomialMod V = A;
-    PolynomialMod W = PolynomialMod({0,1}, p);
+    PolynomialMod X = PolynomialMod({0,1}, p);
+    PolynomialMod W = X;
     int d = 0;
 
-    int e = V.degree;
-    if(d+1 > e/2) {
-        if(e > 0) {
-            output.push_back(std::make_tuple(e, V));
+    while(true) {
+        int e = V.degree;
+        if(d+1 > e/2) {
+            if(e > 0) {
+                output.push_back(std::make_tuple(e, V));
+                return output;
+            }
+        }
+        else {
+            d += 1;
+            W = W.exp(p).mod(V);
+        }
+
+        PolynomialMod Ad = PolynomialMod::gcd(W - X, V);
+        output.push_back(std::make_tuple(d, Ad));
+
+        if(!(Ad == PolynomialMod({1,0},p))) {
+            V = V/Ad;
+            W = W.mod(V);
         }
     }
-    else {
-        d += 1;
-    }
-}*/
+}
 
 TEST_CASE("divide_exponents") {
     int p = 5;
@@ -96,4 +108,15 @@ TEST_CASE("squarefree_factorization") {
     std::vector<std::tuple<int, PolynomialMod>> output = squarefree_factorization(p1);
 
     CHECK(output == predicted_output);
+}
+
+TEST_CASE("distinct degree factorization") {
+    int p = 7;
+    PolynomialMod p1 = PolynomialMod({6,4,5,6,1}, p);
+
+    auto output = distinct_degree_factorization(p1);
+    for(auto [i, Ai] : output) {
+        std::cout << i << std::endl;
+        Ai.print();
+    }
 }

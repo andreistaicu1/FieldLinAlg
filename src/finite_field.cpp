@@ -39,7 +39,7 @@ ff_element ff_element::operator- (ff_element const &other) const {
 ff_element ff_element::operator* (ff_element const &other) const {
     assert(this->ff == other.ff);
 
-    auto [Q, R] = PolynomialMod::div((polynomial*other.polynomial),ff.min_polynomial);
+    PolynomialMod R = (polynomial*other.polynomial).mod(ff.min_polynomial);
 
     return ff_element(R, ff);
 };

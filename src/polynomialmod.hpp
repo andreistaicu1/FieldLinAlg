@@ -23,8 +23,11 @@ public:
     PolynomialMod operator*(const PolynomialMod&) const;
     PolynomialMod operator/(const PolynomialMod&) const;
     PolynomialMod derivative() const;
+
     static std::tuple<PolynomialMod, PolynomialMod> div(const PolynomialMod&, const PolynomialMod&);
     static PolynomialMod gcd(const PolynomialMod&, const PolynomialMod&);
+
+    PolynomialMod mod(const PolynomialMod& modulus);
 
     PolynomialMod operator*(int scalar) const;
     PolynomialMod operator/(int scalar) const;
