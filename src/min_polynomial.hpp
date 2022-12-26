@@ -4,9 +4,9 @@
 #include <vector>
 #include <tuple>
 #include <iostream>
-#include "polynomial.hpp"
+#include "polynomialmod.hpp"
 #include "integers.hpp"
 
-extern std::vector<std::tuple<int, Polynomial>> squarefree_factorization(Polynomial A, int p);
+extern std::vector<std::tuple<int, PolynomialMod>> squarefree_factorization(PolynomialMod A);
 
 #endif

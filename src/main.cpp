@@ -10,6 +10,7 @@
 #include "polynomial.cpp"
 #include "integers.cpp"
 #include "min_polynomial.cpp"
+#include "polynomialmod.cpp"
 
 int normal_main(){
     int p = 23;
