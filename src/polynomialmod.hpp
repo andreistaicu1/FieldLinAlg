@@ -29,6 +29,8 @@ public:
     PolynomialMod operator*(int scalar) const;
     PolynomialMod operator/(int scalar) const;
 
+    PolynomialMod exp(int n) const;
+
     void print() const;
 };
 

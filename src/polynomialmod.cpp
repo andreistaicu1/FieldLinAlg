@@ -111,3 +111,36 @@ PolynomialMod PolynomialMod::operator/(int scalar) const {
 PolynomialMod operator*(int scalar, const PolynomialMod& poly) {
     return poly*scalar;
 }
+
+PolynomialMod PolynomialMod::exp(int n) const {
+    assert(n > 0);
+
+    PolynomialMod y = PolynomialMod({1}, p);
+    if(n == 0) {
+        return y;
+    }
+
+    int N = n;
+    PolynomialMod z = (*this);
+
+    while(true) {
+        if(N % 2 == 1) {
+            y = z * y;
+        }
+
+        N = N/2;
+
+        if(N == 0) {
+            return y;
+        }
+        z = z*z;
+    }
+}
+
+TEST_CASE("exp") {
+    int p = 7;
+    PolynomialMod p1 = PolynomialMod({1,2,3}, 7);
+    PolynomialMod output = PolynomialMod({1,6,0,2,0,5,6}, 7);
+
+    CHECK(p1.exp(3) == output);
+}
