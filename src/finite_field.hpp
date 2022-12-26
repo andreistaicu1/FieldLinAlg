@@ -15,14 +15,14 @@
 #include <tuple>
 #include <unordered_map>
 
-#include "polynomial.hpp"
+#include "polynomialmod.hpp"
 #include "min_polynomial.hpp"
 #include "integers.hpp"
 
 class finite_field {
 public:
     int p_char, degree;
-    Polynomial min_polynomial;
+    PolynomialMod min_polynomial;
 
     finite_field(int p_char, int degree);
     finite_field();
@@ -32,10 +32,10 @@ public:
 
 class ff_element {
 public:
-    Polynomial polynomial;
+    PolynomialMod polynomial;
     finite_field ff;
 
-    ff_element(Polynomial polynomial, finite_field ff);
+    ff_element(PolynomialMod polynomial, finite_field ff);
     ff_element(finite_field ff);
 
     bool operator== (ff_element const &other) const;
@@ -45,7 +45,7 @@ public:
     ff_element operator* (ff_element const &other) const;
     ff_element operator/ (ff_element const &other) const;
     ff_element make_inverse() const;
-    Polynomial euclidean_algorithm(Polynomial elemA, Polynomial elemB) const;
+    PolynomialMod euclidean_algorithm(PolynomialMod elemA, PolynomialMod elemB) const;
 };
 
 #endif

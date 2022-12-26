@@ -54,12 +54,15 @@ std::vector<std::tuple<int, PolynomialMod>> squarefree_factorization(PolynomialM
     goto step3;
 }
 
-/*
-std::vector<std::tuple<int, Polynomial>> distinct_degree_factorization(Polynomial A, int p) {
-    std::vector<std::tuple<int, Polynomial>> output;
 
-    Polynomial V = A;
-    Polynomial W = Polynomial({0,1});
+/*
+std::vector<std::tuple<int, PolynomialMod>> distinct_degree_factorization(PolynomialMod A) {
+    int p = A.p;
+
+    std::vector<std::tuple<int, PolynomialMod>> output;
+
+    PolynomialMod V = A;
+    PolynomialMod W = PolynomialMod({0,1}, p);
     int d = 0;
 
     int e = V.degree;
