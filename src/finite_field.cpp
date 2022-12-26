@@ -27,17 +27,13 @@ ff_element ff_element::operator= (ff_element const &other) {
 ff_element ff_element::operator+ (ff_element const &other) const {
     assert(this->ff == other.ff);
 
-    PolynomialMod output = this->polynomial + other.polynomial;
-
-    return ff_element(output, ff);
+    return ff_element(polynomial + other.polynomial, ff);
 };
 
 ff_element ff_element::operator- (ff_element const &other) const {
     assert(this->ff == other.ff);
 
-    PolynomialMod output = this->polynomial - other.polynomial;
-
-    return ff_element(output, this->ff);
+    return ff_element(polynomial - other.polynomial, this->ff);
 };
 
 ff_element ff_element::operator* (ff_element const &other) const {
