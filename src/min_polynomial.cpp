@@ -4,6 +4,7 @@
 #include "polynomialmod.hpp"
 
 #include <random>
+#include <chrono>
 
 PolynomialMod divide_exponents(PolynomialMod A){
     std::vector<int> output(std::max(A.degree,1), 0);
@@ -69,16 +70,9 @@ std::vector<std::tuple<int, PolynomialMod>> distinct_degree_factorization(Polyno
 
     while(true) {
         int e = V.degree;
-        std::cout << "d: " << d << std::endl;
-        std::cout << "e: " << e << std::endl;
         if(d+1 > e/2) {
             if(e > 0) {
                 output.push_back(std::make_tuple(e, V/V.lead_coeff));
-            }
-
-            for (auto [d, B] : output){
-                std::cout << "degree: " << d << std::endl;
-                B.print();
             }
 
             return output;
@@ -88,26 +82,13 @@ std::vector<std::tuple<int, PolynomialMod>> distinct_degree_factorization(Polyno
             W = W.exp(p).mod(V);
         }
 
-        std::cout << "W: " << std::endl;
-        W.print();
-
         PolynomialMod Ad = PolynomialMod::gcd(W - X, V);
-
-        std::cout << "Ad: " << std::endl;
-        Ad.print();
 
         output.push_back(std::make_tuple(d, Ad/Ad.lead_coeff));
 
         if(!(Ad == PolynomialMod({1,0},p))) {
             V = V/Ad;
             W = W.mod(V);
-        }
-
-        std::cout << "V: " << std::endl;
-        V.print();
-
-        if(W == PolynomialMod({0}, p)) {
-            //throw;
         }
     }
 }
@@ -168,19 +149,26 @@ std::vector<PolynomialMod> cantor_zassenhaus_split(PolynomialMod input_poly, int
     PolynomialMod A = input_poly;
 
     int k = A.degree / d;
+    std::cout << k << std::endl;
     if (k == 1){
         return {A/A.lead_coeff};
     }
 
     PolynomialMod B = PolynomialMod(p);
+    auto start = std::chrono::high_resolution_clock::now();
     while(true){
         int exponent = std::div(std::pow(p, d) - 1, 2).quot;
+
         PolynomialMod T = random_polynomial((2 * d) - 1, p).exp(exponent);
+        
         B = PolynomialMod::gcd(A, T - 1);
         if (!(B.degree == 0 || B.degree == A.degree)){
             break;
         }
     }
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start);
+    std::cout << duration.count() << " milliseconds" << std::endl;
 
     auto output1 = cantor_zassenhaus_split(A / B, d);
     auto output2 = cantor_zassenhaus_split(B, d);
@@ -194,25 +182,30 @@ PolynomialMod create_min_polynomial(int p, int degree) {
     std::vector<int> initial_vec(leading_index + 1, 0);
 
     initial_vec[leading_index] = 1;
-    initial_vec[1] = 1;
+    initial_vec[1] = -1;
 
     PolynomialMod initial = PolynomialMod(initial_vec, p);
 
     std::vector<std::tuple<int, PolynomialMod>> squarefree = squarefree_factorization(initial);
-    std::cout << "Length: " << squarefree.size() << std::endl;
 
     for(auto [d, A] : squarefree) {
+        A.print();
         if(A.degree < degree) {
             continue;
         }
-        std::vector<std::tuple<int, PolynomialMod>> dd_factor = distinct_degree_factorization(A); // INFINITE LOOP
+        std::vector<std::tuple<int, PolynomialMod>> dd_factor = distinct_degree_factorization(A); 
+        std::cout << "dd_factor.size(): " << dd_factor.size() << std::endl;
 
         for(auto [deg, B] : dd_factor) {
-            if (deg == degree) {
-                return cantor_zassenhaus_split(B, deg)[0]; // Wish us luck
+            if (deg == degree && !(B == PolynomialMod({1},p))) {
+                std::cout << "degree: " << deg << std::endl;
+                B.print();
+                return cantor_zassenhaus_split(B, deg)[0]; 
             }
         }
     }
+
+    return PolynomialMod(p);
 }
 
 TEST_CASE("divide_exponents") {
@@ -238,37 +231,35 @@ TEST_CASE("squarefree_factorization") {
 }
 
 TEST_CASE("distinct degree factorization") {
-    /*
     int p = 5;
-    PolynomialMod p1 = PolynomialMod({1,1,2,1,1}, p);
-    
-    auto output = distinct_degree_factorization(p1);
-    for(auto [i, Ai] : output) {
-        std::cout << i << std::endl;
-        Ai.print();
-    }*/
-    int p = 5;
-    PolynomialMod A = PolynomialMod({0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}, p);
+    PolynomialMod A = PolynomialMod({0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}, p);
+
+    auto deg1 = std::make_tuple(1,PolynomialMod({0,4,0,0,0,1},p));
+    auto deg2 = std::make_tuple(2, PolynomialMod({1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},p));
+    std::vector<std::tuple<int, PolynomialMod>> predicted_output = {deg1, deg2};
+
     auto output = distinct_degree_factorization(A);
-    std::cout << "we made it into the test case!" << std::endl;
-    std::cout << "and look it has length: " << output.size() << std::endl;
-    for(auto [i, Ai] : output) {
-        std::cout << i << std::endl;
-        Ai.print();
-    }
+
+    CHECK(output == predicted_output);
 }
 
 TEST_CASE("cantor_zassenhaus_split") {
     SUBCASE("p != 2") {
+        /* 
         int p = 5;
-        PolynomialMod p1 = PolynomialMod({1,0,1}, p);
+        PolynomialMod p1 = PolynomialMod({1}, p);
+        
+        //std::vector<PolynomialMod> prediction_output = {PolynomialMod({3,1},p), PolynomialMod({2,1},p)};
 
         auto output = cantor_zassenhaus_split(p1, 1);
+
+        //CHECK(output == prediction_output);
         std::cout << "length: " << output.size() << std::endl;
         for(PolynomialMod elem : output) {
-            //elem.print();
-        }
+            elem.print();
+        }*/
     }
+    /*
     SUBCASE("p == 2") {
         int p = 2;
         PolynomialMod p1 = PolynomialMod({0,1,1}, p);
@@ -278,10 +269,11 @@ TEST_CASE("cantor_zassenhaus_split") {
         for(PolynomialMod elem : output) {
             //elem.print();
         }
-    }
+    }*/
 }
 
+
 TEST_CASE("create_min_polynomial") {
-    auto min_polynomial = create_min_polynomial(5, 2);
-    //min_polynomial.print();
+    auto min_polynomial = create_min_polynomial(5, 3);
+    min_polynomial.print();
 }
