@@ -89,6 +89,7 @@
         "unordered_set": "cpp",
         "__functional_base": "cpp",
         "source_location": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "span": "cpp"
     }
 }

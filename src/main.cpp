@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <random>
 
 #include "finite_field.cpp"
 #include "polynomial.cpp"
