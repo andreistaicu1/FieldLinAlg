@@ -7,6 +7,6 @@
 #include "polynomialmod.hpp"
 #include "integers.hpp"
 
-extern std::vector<std::tuple<int, PolynomialMod>> squarefree_factorization(PolynomialMod A);
+extern PolynomialMod create_min_polynomial(int p, int degree);
 
 #endif

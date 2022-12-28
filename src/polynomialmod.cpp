@@ -2,6 +2,9 @@
 #include "integers.hpp"
 #include "doctest.h"
 
+#include <chrono>
+#include <iostream>
+
 PolynomialMod::PolynomialMod(Polynomial poly, int p) : p(p) {
     this->poly = poly.pure_mod(p);
     lead_coeff = this->poly.lead_coeff;
@@ -67,6 +70,7 @@ std::tuple<PolynomialMod, PolynomialMod> PolynomialMod::div(const PolynomialMod&
         }
 
         int lead_R = R.lead_coeff;
+
         int lead_R_div_lead_B = mod_p(lead_R*lead_B_inv, p);
 
         std::vector<int> S_vec(R.degree-B.degree+1,0);
@@ -74,6 +78,7 @@ std::tuple<PolynomialMod, PolynomialMod> PolynomialMod::div(const PolynomialMod&
         PolynomialMod S = PolynomialMod(S_vec, p);
 
         Q = Q + S;
+
         R = R - (S*B);
     }
 }
@@ -90,6 +95,7 @@ PolynomialMod PolynomialMod::gcd(const PolynomialMod& Aorig, const PolynomialMod
         }
 
         auto [Q, R] = div(A, B);
+
         A = B;
         B = R;
     }

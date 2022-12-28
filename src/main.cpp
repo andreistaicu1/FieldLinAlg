@@ -12,6 +12,7 @@
 #include "integers.cpp"
 #include "min_polynomial.cpp"
 #include "polynomialmod.cpp"
+#include "fft.cpp"
 
 int normal_main(){
     int p = 23;

@@ -13,6 +13,7 @@
 
 #include "polynomial.hpp"
 #include "integers.hpp"
+#include "fft.hpp"
 
 #include "doctest.h"
 
@@ -100,7 +101,7 @@ Polynomial Polynomial::operator-(const Polynomial& other) const {
 };
 
 Polynomial Polynomial::operator*(const Polynomial& other) const {
-    
+    /*
     int new_degree = this->degree + other.degree + 1;
     std::vector<int> output(new_degree, 0);
 
@@ -113,6 +114,39 @@ Polynomial Polynomial::operator*(const Polynomial& other) const {
     }
     
     return Polynomial(output);
+    */
+
+    int power_2 = 1;
+    while(power_2 < (p.size() + other.p.size() - 1)) {
+        power_2 *= 2; 
+    }
+
+    // Creating the empty vectors
+    std::vector<std::complex<double> > this_l(power_2, 0.0);
+    std::vector<std::complex<double> > other_r(power_2, 0.0);
+    std::vector<std::complex<double> > product(power_2, 0.0);
+
+    for (int i = 0; i < p.size(); i++){
+        this_l[i] = p[i];
+    }
+
+    for (int i = 0; i < other.p.size(); i++){
+        other_r[i] = other.p[i];
+    }
+
+    this_l = fft(this_l);
+    other_r = fft(other_r);
+
+    for(auto i = 0; i < power_2; ++i) {
+        product[i] = this_l[i]*other_r[i];
+    }
+    product = ifft(product);
+
+    std::vector<int> output(p.size() + other.p.size() - 1);
+    for(auto i = 0; i < output.size(); ++i) {
+        output[i] = std::round(product[i].real() / power_2);
+    }
+    return output;
 }
 
 Polynomial Polynomial::operator*(int scalar) const {

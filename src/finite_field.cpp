@@ -3,7 +3,7 @@
 
 finite_field::finite_field() : p_char(0), degree(0), min_polynomial(PolynomialMod(0)) {};
 
-finite_field::finite_field(int p_char, int degree) : p_char(p_char), degree(degree), min_polynomial(PolynomialMod(p_char)) {};
+finite_field::finite_field(int p_char, int degree) : p_char(p_char), degree(degree), min_polynomial(PolynomialMod(p_char))/*min_polynomial(create_min_polynomial(p_char, degree)*/ {};
 
 bool finite_field::operator== (finite_field const &other) const {
     return this->p_char == other.p_char && this->degree == other.degree;

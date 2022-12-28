@@ -93,14 +93,12 @@ std::vector<std::tuple<int, PolynomialMod>> distinct_degree_factorization(Polyno
     }
 }
 
-unsigned SEED = std::chrono::system_clock::now().time_since_epoch().count();
-std::default_random_engine GENERATOR(SEED);
+std::minstd_rand GENERATOR(std::random_device{}());
 
-PolynomialMod random_polynomial(int degree, int p) {
+PolynomialMod random_polynomial(int degree, int p, std::uniform_int_distribution<int> distribution) {
     std::vector<int> output(degree+1, 0);
     output[degree] = 1;
 
-    std::uniform_int_distribution<int> distribution(0,p);
     for(auto i = 0; i < degree; ++i) {
         output[i] = distribution(GENERATOR);
     }
@@ -139,7 +137,7 @@ std::vector<PolynomialMod> cantor_zassenhaus_split_2(PolynomialMod A, int d) {
     return output1;
 }
 
-std::vector<PolynomialMod> cantor_zassenhaus_split(PolynomialMod input_poly, int d) {
+std::vector<PolynomialMod> cantor_zassenhaus_split(PolynomialMod input_poly, int d, std::uniform_int_distribution<int> distribution) {
     int p = input_poly.p;
 
     if(p == 2) {
@@ -155,23 +153,20 @@ std::vector<PolynomialMod> cantor_zassenhaus_split(PolynomialMod input_poly, int
     }
 
     PolynomialMod B = PolynomialMod(p);
-    auto start = std::chrono::high_resolution_clock::now();
     while(true){
         int exponent = std::div(std::pow(p, d) - 1, 2).quot;
 
-        PolynomialMod T = random_polynomial((2 * d) - 1, p).exp(exponent);
+        PolynomialMod T = random_polynomial((2 * d) - 1, p, distribution);
+        T = T.exp(exponent);
         
         B = PolynomialMod::gcd(A, T - 1);
         if (!(B.degree == 0 || B.degree == A.degree)){
             break;
         }
     }
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start);
-    std::cout << duration.count() << " milliseconds" << std::endl;
 
-    auto output1 = cantor_zassenhaus_split(A / B, d);
-    auto output2 = cantor_zassenhaus_split(B, d);
+    auto output1 = cantor_zassenhaus_split(A / B, d, distribution);
+    auto output2 = cantor_zassenhaus_split(B, d, distribution);
     output1.insert(output1.end(), output2.begin(), output2.end());  // Optimize by moving in place
 
     return output1;
@@ -188,6 +183,8 @@ PolynomialMod create_min_polynomial(int p, int degree) {
 
     std::vector<std::tuple<int, PolynomialMod>> squarefree = squarefree_factorization(initial);
 
+    std::uniform_int_distribution<int> distribution(0,p);
+
     for(auto [d, A] : squarefree) {
         A.print();
         if(A.degree < degree) {
@@ -200,11 +197,10 @@ PolynomialMod create_min_polynomial(int p, int degree) {
             if (deg == degree && !(B == PolynomialMod({1},p))) {
                 std::cout << "degree: " << deg << std::endl;
                 B.print();
-                return cantor_zassenhaus_split(B, deg)[0]; 
+                return cantor_zassenhaus_split(B, deg, distribution)[0];
             }
         }
     }
-
     return PolynomialMod(p);
 }
 
@@ -274,6 +270,13 @@ TEST_CASE("cantor_zassenhaus_split") {
 
 
 TEST_CASE("create_min_polynomial") {
+    auto start = std::chrono::high_resolution_clock::now();
+
     auto min_polynomial = create_min_polynomial(5, 3);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start);
+    std::cout << duration.count() << " milliseconds" << std::endl;
+
     min_polynomial.print();
 }
